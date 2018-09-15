@@ -72,12 +72,12 @@ class LSTM_rnn():
         def __graph__():
             # tf.reset_default_graph()
             # inputs
-            xs_ = tf.placeholder(shape=[None, None], dtype=tf.int32)
-            ys_ = tf.placeholder(shape=[None], dtype=tf.int32)
+            xs_ = self.query
+            ys_ = self.target
             #
             # embeddings
             embs = tf.get_variable('emb', [self.num_classes, self.state_size])
-            rnn_inputs = tf.nn.embedding_lookup(embs, xs_)
+            rnn_inputs = tf.expand_dims(xs_, axis=2)
             #
             # initial hidden state
             init_state = tf.placeholder(
@@ -89,7 +89,7 @@ class LSTM_rnn():
                 'W', shape=[4, self.state_size, self.state_size], initializer=xav_init())
             U = tf.get_variable(
                 'U', shape=[4, self.state_size, self.state_size], initializer=xav_init())
-            b = tf.get_variable('b', shape=[self.state_size], initializer=tf.constant_initializer(0.))
+            # b = tf.get_variable('b', shape=[self.state_size], initializer=tf.constant_initializer(0.))
             ####
             # step - LSTM
 
@@ -142,7 +142,7 @@ class LSTM_rnn():
             predictions = tf.nn.softmax(logits)
             #
             # optimization
-            losses = tf.nn.sparse_softmax_cross_entropy_with_logits(
+            losses = tf.nn.softmax_cross_entropy_with_logits(
                 logits=logits, labels=ys_)
             loss = tf.reduce_mean(losses)
             train_op = tf.train.AdagradOptimizer(
@@ -226,7 +226,8 @@ class LSTM_rnn():
 
             _, loss, self.step = self.sess.run([self.optim, self.loss, self.global_step],
                                             feed_dict={self.query: query, self.time: time,
-                                                        self.target: target, self.context: context})
+                                                        self.target: target, self.context: context,
+                                                        self.init_state: np.zeros([2, 32, self.state_size])})
             cost += np.sum(loss)
 
             # return cost / len(train_questions)
