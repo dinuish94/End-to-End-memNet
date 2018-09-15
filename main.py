@@ -4,7 +4,7 @@ import pprint
 import tensorflow as tf
 
 from data import read_data, pad_data
-from model import MemN2N
+from lstm import LSTM_rnn
 
 pp = pprint.PrettyPrinter()
 
@@ -58,14 +58,17 @@ def main(_):
     pp.pprint(flags.FLAGS.__flags)
     
     with tf.Session() as sess:
-        model = MemN2N(FLAGS, sess)
-        model.build_model()
+        sess.run(tf.global_variables_initializer())
+        model = LSTM_rnn(FLAGS, sess)
         
-        if FLAGS.is_test:
-            t = model.run(valid_stories, valid_questions, test_stories, test_questions)
-            print(t)
-        else:
-            model.run(train_stories, train_questions, valid_stories, valid_questions)
+        # if FLAGS.is_test:
+            # t = model.run(valid_stories, valid_questions, test_stories, test_questions)
+            # model.train(valid_stories, valid_questions, test_stories, test_questions)
+        # else:
+        # print(valid_stories)
+        model.train(valid_stories, valid_questions)
+
+            # model.run(train_stories, train_questions, valid_stories, valid_questions)
 
 
 if __name__ == '__main__':

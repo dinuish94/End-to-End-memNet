@@ -106,12 +106,12 @@ class MemN2N(object):
             self.hid.append(a)              # [input, a_1, a_2, ..., a_nhop]
     
     def build_model(self):
-        self.build_memory()
+        # self.build_memory()
         
         self.W = tf.Variable(tf.random_normal([self.edim, self.nwords], mean=self.init_mean, stddev=self.init_std))
-        a_hat = tf.matmul(self.hid[-1], self.W)
+        # a_hat = tf.matmul(self.hid[-1], self.W)
         
-        self.hypothesis = tf.nn.softmax(a_hat)
+        self.hypothesis = tf.nn.softmax(tf.matmul(self.query,self.W) + b)
 
         self.loss = tf.nn.softmax_cross_entropy_with_logits(logits=a_hat, labels=self.target)
         
@@ -181,7 +181,7 @@ class MemN2N(object):
                 target[b, answer] = 1
                 context[b, :, :] = curr_c
 
-            _, loss, self.step, self.accuracy = self.sess.run([self.optim, self.loss, self.global_step, self.accuracy],
+            _, loss, self.step = self.sess.run([self.optim, self.loss, self.global_step],
                                                feed_dict={self.query: query, self.time: time,
                                                           self.target: target, self.context: context})
             cost += np.sum(loss)
@@ -189,7 +189,7 @@ class MemN2N(object):
         if self.show_progress:
             bar.finish()
         
-        return cost / len(train_questions), self.accuracy
+        return cost / len(train_questions)
     
     
     def test(self, test_stories, test_questions, label='Test'):
@@ -258,7 +258,7 @@ class MemN2N(object):
         if not self.is_test:
 
             for idx in range(self.nepoch):
-                train_loss, accuracy = np.sum(self.train(train_stories, train_questions))
+                train_loss = np.sum(self.train(train_stories, train_questions))
                 test_loss = np.sum(self.test(test_stories, test_questions, label='Validation'))
 
                 self.log_loss.append([train_loss, test_loss])
@@ -267,8 +267,7 @@ class MemN2N(object):
                     'loss': train_loss,
                     'epoch': idx,
                     'learning_rate': self.current_lr,
-                    'validation_loss': test_loss,
-                    'accuracy': accuracy
+                    'validation_loss': test_loss
                 }
                 
                 print(state)
@@ -343,9 +342,9 @@ class MemN2N(object):
             target[b, answer] = 1
             context[b, :, :] = curr_c
 
-        predictions, accuracy = self.sess.run(self.hypothesis, feed_dict={self.query: query, self.time: time, self.context: context})
+        predictions = self.sess.run(self.hypothesis, feed_dict={self.query: query, self.time: time, self.context: context})
         # print(predictions)
-        return predictions, target, accuracy
+        return predictions, target
 
 
         
